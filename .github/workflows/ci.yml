@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install "ruff==0.16.9" "pytest>=8"
+      - name: ruff
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: pytest
+        run: python -m pytest
+      - name: demo smoke test
+        run: |
+          PYTHONPATH=src python -m fancurve.demo --port 18790 --duration 8 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:18790/healthz && break; sleep 0.3; done
+          curl -fsS http://127.0.0.1:18790/api/status | python -c "import json,sys; d=json.load(sys.stdin); assert d['state'] in ('controlling','degraded'), d['state']; print('state', d['state'])"
+          wait

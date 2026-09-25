@@ -1,0 +1,118 @@
+{
+  "sysfs_root": "./sim-sysfs",
+  "chip": "nct6798",
+  "interval_s": 2,
+  "auto_mode": 5,
+  "state_file": "./sim-sysfs/fancurve-state.json",
+  "sensors": {
+    "cpu": {
+      "chip": "nct6798",
+      "input": "temp13_input",
+      "label": "CPU (TSI0)"
+    },
+    "system": {
+      "chip": "nct6798",
+      "input": "temp1_input",
+      "label": "Board (SYSTIN)"
+    },
+    "nvme": {
+      "chip": "nvme",
+      "input": "temp1_input",
+      "label": "NVMe SSD"
+    },
+    "gpu": {
+      "chip": "amdgpu",
+      "input": "temp1_input",
+      "label": "iGPU"
+    }
+  },
+  "fans": {
+    "cpu_fan": {
+      "label": "CPU cooler",
+      "channel": 1,
+      "source": "cpu",
+      "curve": [
+        [
+          40,
+          25
+        ],
+        [
+          60,
+          40
+        ],
+        [
+          72,
+          65
+        ],
+        [
+          82,
+          100
+        ]
+      ],
+      "min_pwm": 30,
+      "hysteresis_c": 3
+    },
+    "intake": {
+      "label": "Front intake",
+      "channel": 2,
+      "source": "nvme",
+      "curve": [
+        [
+          35,
+          25
+        ],
+        [
+          50,
+          40
+        ],
+        [
+          62,
+          70
+        ],
+        [
+          72,
+          100
+        ]
+      ],
+      "min_pwm": 22,
+      "hysteresis_c": 2
+    },
+    "exhaust": {
+      "label": "Rear exhaust",
+      "channel": 3,
+      "source": "system",
+      "curve": [
+        [
+          28,
+          25
+        ],
+        [
+          36,
+          40
+        ],
+        [
+          44,
+          70
+        ],
+        [
+          52,
+          100
+        ]
+      ],
+      "min_pwm": 30,
+      "hysteresis_c": 1.5
+    }
+  },
+  "failsafe": {
+    "stale_after_s": 6,
+    "frozen_after_s": 30,
+    "min_valid_c": 0,
+    "max_valid_c": 120,
+    "watchdog_s": 10
+  },
+  "web": {
+    "bind": "127.0.0.1",
+    "port": 8790,
+    "token_file": null
+  }
+}

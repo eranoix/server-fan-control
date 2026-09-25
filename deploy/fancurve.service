@@ -1,0 +1,40 @@
+# Example unit for real hardware. Assumes the package is installed in a venv
+# at /opt/fancurve (see the README). Copy to /etc/systemd/system/, adjust the
+# paths, then: systemctl daemon-reload && systemctl enable --now fancurve
+#
+# Only one program may drive the PWM channels. If lm-sensors' fancontrol is
+# installed, disable it first (systemctl disable --now fancontrol); this unit
+# refuses to start next to it.
+
+[Unit]
+Description=Fan curve controller (hwmon)
+After=systemd-modules-load.service
+Conflicts=fancontrol.service
+
+[Service]
+Type=simple
+ExecStart=/opt/fancurve/bin/fancurve run -c /etc/fancurve/config.json
+# Runs after ANY stop, including a crash or kill -9: hands the channels back
+# to the chip's automatic mode, recorded in the state file at startup.
+ExecStopPost=/opt/fancurve/bin/fancurve restore -c /etc/fancurve/config.json
+Restart=always
+RestartSec=2
+RuntimeDirectory=fancurve
+
+# Needs to write /sys/class/hwmon/*/pwm*, so it runs as root, with the rest
+# of the system read-only. ProtectSystem=strict leaves /sys writable; the
+# dashboard saves curves to /etc/fancurve, so that stays writable too.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/etc/fancurve
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
