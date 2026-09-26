@@ -14,7 +14,7 @@ Standard library only at runtime. Python 3.10 or newer.
 The Python package, the command it installs and the systemd unit keep the
 project's original short name: they are all called `fancurve`.
 
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/01-dashboard.png)
 
 ## Try it in one command
 
@@ -24,7 +24,8 @@ From a clone of this repository:
 make demo                 # or: PYTHONPATH=src python3 -m fancurve.demo
 ```
 
-Open <http://127.0.0.1:8790/>. The demo builds a fake `/sys/class/hwmon` tree
+Open <http://127.0.0.1:8790/> (if that port is taken, `make demo DEMO_PORT=8791`
+and open that one instead). The dashboard has a single dark theme. The demo builds a fake `/sys/class/hwmon` tree
 in a temporary directory, runs a thermal model against it, and puts the real
 controller and dashboard on top. Nothing touches your actual hardware.
 
@@ -119,7 +120,7 @@ is a bug waiting for a hot day. Unknown keys are errors too, so a misspelled
 curve editor enforces the same rules while you drag, and the server checks
 again before anything reaches the chip.
 
-![A sensor goes missing and its fan goes to full speed](docs/screenshots/failsafe.png)
+![A sensor goes missing and its fan goes to full speed](docs/screenshots/02-failsafe.png)
 
 ## How the loop works
 
@@ -141,7 +142,7 @@ drifts between 67 and 70 nothing changes; once it drops below 67 the curve is
 read at the current temperature plus 3. Rising temperatures always pass
 straight through, so the band never delays cooling.
 
-![Curve editor](docs/screenshots/curve-editor.png)
+![Curve editor](docs/screenshots/03-curve-editor.png)
 
 The dashed line is the live source temperature, the white dot is where the
 fan actually is. When they differ horizontally, that gap is the hysteresis at
@@ -291,9 +292,14 @@ examples/         configs for real hardware and for the simulator
 ## Tests
 
 ```bash
-pip install pytest
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e '.[dev]'
 make test          # or: python3 -m pytest
+make lint          # ruff
 ```
+
+A virtual environment, because recent Debian and Ubuntu releases refuse a
+plain `pip install` outside one.
 
 The suite covers curve interpolation and hysteresis, every rule in config
 validation, every fail-safe path in the table above (each one asserting what

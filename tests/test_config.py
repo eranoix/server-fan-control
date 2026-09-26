@@ -193,7 +193,9 @@ def test_failed_save_keeps_the_old_file(tmp_path, monkeypatch):
 
 def test_load_reports_json_errors_with_line(tmp_path):
     p = tmp_path / "c.json"
-    p.write_text('{\n "chip": "x",\n}')
+    # A missing comma, not a trailing one: Python 3.13 reports a trailing comma
+    # on the line of the comma, older versions on the line after it.
+    p.write_text('{\n "chip": "x"\n "fans": {}\n}')
     with pytest.raises(ConfigError) as exc:
         load_config(p)
     assert "line 3" in exc.value.errors[0]
