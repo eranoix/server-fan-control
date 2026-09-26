@@ -1,5 +1,7 @@
 # server-fan-control
 
+[![CI](https://github.com/eranoix/server-fan-control/actions/workflows/ci.yml/badge.svg)](https://github.com/eranoix/server-fan-control/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white) ![dependencies stdlib only](https://img.shields.io/badge/dependencies-stdlib%20only-brightgreen)
+
 **Sets a server's fan speeds from the temperatures that matter, and runs every fan at full speed if anything fails.**
 
 *In plain words:* Computers that run all day have fans to keep them cool, and those fans often spin at the wrong speed: too loud, or too slow for the part that is actually getting hot. This program lets each fan follow the temperature of the part it is there to cool. If a sensor stops answering or the program itself fails, every fan goes to full speed, because a loud server is better than a damaged one. A built in simulator lets anyone try it, dashboard included, on an ordinary laptop.
