@@ -122,8 +122,6 @@ class Simulator:
         self._pwm_seen: dict[int, int] = {}
         self._written: dict[Path, str] = {}
 
-    # -- tree ------------------------------------------------------------
-
     @property
     def hwmon_base(self) -> Path:
         return self.root / "class" / "hwmon"
@@ -156,8 +154,6 @@ class Simulator:
         _atomic_write(nct / "temp2_input", "31000")
         _atomic_write(nct / "in0_input", "1016")
         return self.root
-
-    # -- faults and workload ---------------------------------------------
 
     def set_fault(self, sensor: str, fault: str | None) -> None:
         if sensor not in self.sensors:
@@ -211,8 +207,6 @@ class Simulator:
                     self.set_fault(sid, fault)
         except (KeyError, ValueError):
             pass
-
-    # -- physics ---------------------------------------------------------
 
     def _duty(self, ch: int) -> float:
         """Duty the chip is actually driving on ``ch``, in percent."""

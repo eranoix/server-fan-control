@@ -20,9 +20,6 @@ def run(ctl, clock, seconds, step=1.0):
         ctl.tick()
 
 
-# -- sensor faults ------------------------------------------------------------
-
-
 def test_sensor_missing_from_the_start_means_full_speed_immediately(make_controller, sysfs):
     sysfs.temp_path("cpu").unlink()
     ctl = make_controller()
@@ -127,9 +124,6 @@ def test_holding_is_not_granted_to_a_sensor_that_was_already_failed():
     assert not track.usable
 
 
-# -- controller faults --------------------------------------------------------
-
-
 def test_exception_in_a_tick_drives_every_fan_to_full(make_controller, sysfs):
     ctl = make_controller()
     ctl.tick()
@@ -226,9 +220,6 @@ def test_chip_missing_waits_then_takes_control(make_controller, sysfs, clock, tm
     clock.advance(1)
     ctl.tick()
     assert ctl.taken and sysfs.mode(1) == 1
-
-
-# -- handing back ---------------------------------------------------------------
 
 
 def test_release_restores_the_original_modes(make_controller, sysfs, raw_config):

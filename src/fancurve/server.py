@@ -102,8 +102,6 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
         def log_message(self, fmt: str, *args: Any) -> None:
             log.debug("%s %s", self.address_string(), fmt % args)
 
-        # -- helpers -------------------------------------------------------
-
         def _send(self, status: int, body: bytes, ctype: str, cache: bool = False) -> None:
             self.send_response(status)
             self.send_header("Content-Type", ctype)
@@ -151,8 +149,6 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return json.loads(self.rfile.read(n) or b"null")
             except json.JSONDecodeError as exc:
                 raise ValueError(f"invalid JSON: {exc.msg}") from exc
-
-        # -- verbs ---------------------------------------------------------
 
         def do_HEAD(self) -> None:  # noqa: N802
             self.do_GET()

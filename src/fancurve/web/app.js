@@ -20,8 +20,6 @@ const state = {
   token: new URLSearchParams(location.search).get('token') || '',
 };
 
-// ---------------------------------------------------------------- helpers
-
 function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
 function h(tag, attrs, ...kids) {
@@ -73,8 +71,6 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const clock = t => new Date(t * 1000).toLocaleTimeString([], { hour12: false });
 const sensorLabel = id => (state.config.sensors[id] || {}).label || id;
 
-// ---------------------------------------------------------------- layout
-
 function buildSensors() {
   const box = document.getElementById('sensors');
   box.replaceChildren();
@@ -115,8 +111,6 @@ function buildLegends() {
     h('span', { style: { '--c': fanColor(id) } }, h('i'), f.label)),
     h('span', { style: { '--c': css('--crit') } }, h('i'), 'fail-safe'));
 }
-
-// ---------------------------------------------------------------- charts
 
 function lineChart(svg, series, opt) {
   const W = 600, H = 220, L = 34, R = 8, T = 8, B = 20;
@@ -170,8 +164,6 @@ function drawCharts() {
     Object.keys(state.config.fans).map(id => ({ color: fanColor(id), points: hist.map(s => [s.t, s.pwm[id]]) })),
     { min: 0, max: 100, step: 20, unit: '%', bands: failsafeBands() });
 }
-
-// ---------------------------------------------------------------- editors
 
 const ED = { W: 400, H: 230, L: 32, R: 8, T: 8, B: 22 };
 const EX = t => ED.L + (ED.W - ED.L - ED.R) * (t - T_MIN) / (T_MAX - T_MIN);
@@ -417,8 +409,6 @@ async function save(id) {
   }
 }
 
-// ---------------------------------------------------------------- live
-
 function renderStatus() {
   const s = state.status;
   const st = document.getElementById('state');
@@ -427,7 +417,6 @@ function renderStatus() {
   document.getElementById('chip').textContent = s.chip;
   document.getElementById('updated').textContent = `${clock(s.time)} · tick ${s.loop.ticks} · every ${s.loop.interval_s}s`;
 
-  // banner
   const failing = Object.entries(s.fans).filter(([, f]) => f.mode === 'failsafe');
   const banner = document.getElementById('banner');
   if (failing.length) {

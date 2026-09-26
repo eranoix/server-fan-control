@@ -136,8 +136,6 @@ class Controller:
         # Test and demo hook: raise inside the next tick, as a bug would.
         self.crash_next_tick: str | None = None
 
-    # -- config ------------------------------------------------------------
-
     @property
     def config(self) -> Config:
         return self._cfg
@@ -159,13 +157,9 @@ class Controller:
                 self.sensors.setdefault(sid, SensorTrack())
             self._cfg = new
 
-    # -- events ------------------------------------------------------------
-
     def event(self, level: str, message: str) -> None:
         self.events.append({"t": self.wall(), "level": level, "message": message})
         getattr(log, "warning" if level == "warn" else level, log.info)(message)
-
-    # -- taking and releasing the chip -------------------------------------
 
     def take(self) -> bool:
         """Record the chip's current modes and switch our channels to manual.
@@ -216,8 +210,6 @@ class Controller:
             self.released = True
             self._remove_state_file()
             self.event("info", "released chip to automatic mode: " + ", ".join(restored))
-
-    # -- the loop ----------------------------------------------------------
 
     def tick(self) -> None:
         """One control step. Never raises: any failure becomes full speed."""
@@ -362,8 +354,6 @@ class Controller:
             except Exception:  # noqa: BLE001
                 log.exception("watchdog check failed")
 
-    # -- state file ----------------------------------------------------------
-
     def _read_state_file(self) -> dict[int, int]:
         path = self._cfg.state_file
         if not path:
@@ -393,8 +383,6 @@ class Controller:
         if self._cfg.state_file:
             with contextlib.suppress(OSError):
                 Path(self._cfg.state_file).unlink()
-
-    # -- reporting -------------------------------------------------------------
 
     def _record_history(self) -> None:
         cfg = self._cfg

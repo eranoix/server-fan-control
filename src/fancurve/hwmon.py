@@ -44,8 +44,6 @@ class Hwmon:
         self.base = self.sysfs_root / "class" / "hwmon"
         self._cache: dict[str, Path] = {}
 
-    # -- discovery -------------------------------------------------------
-
     def chips(self) -> dict[str, str]:
         """Map of ``hwmonN`` directory to chip name, for diagnostics."""
         out: dict[str, str] = {}
@@ -71,8 +69,6 @@ class Hwmon:
                 self._cache[chip] = d
                 return d
         return None
-
-    # -- reads -----------------------------------------------------------
 
     def read_temp(
         self, chip: str, attr: str, min_valid: float = -273.0, max_valid: float = 1000.0
@@ -116,8 +112,6 @@ class Hwmon:
             return self.read_int(chip, attr)
         except HwmonError:
             return None
-
-    # -- writes ----------------------------------------------------------
 
     def write_int(self, chip: str, attr: str, value: int) -> None:
         d = self.find(chip)

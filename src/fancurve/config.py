@@ -90,9 +90,6 @@ class Config:
     web: WebSpec = field(default_factory=WebSpec)
 
 
-# -- validation helpers ------------------------------------------------------
-
-
 def _is_num(v: Any) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
@@ -165,8 +162,6 @@ def validate_curve(points: Any, where: str) -> list[str]:
     return errs
 
 
-# -- parsing -----------------------------------------------------------------
-
 TOP_KEYS = {
     "sysfs_root",
     "chip",
@@ -208,7 +203,6 @@ def parse_config(data: Any) -> Config:
         errs.append("config.state_file: must be a path or null")
         state_file = None
 
-    # sensors
     sensors: dict[str, SensorSpec] = {}
     raw_sensors = data.get("sensors", {})
     if not isinstance(raw_sensors, dict) or not raw_sensors:
@@ -228,7 +222,6 @@ def parse_config(data: Any) -> Config:
         if s_chip and s_input:
             sensors[sid] = SensorSpec(sid, s_chip, s_input, label)
 
-    # fans
     fans: dict[str, FanSpec] = {}
     raw_fans = data.get("fans", {})
     if not isinstance(raw_fans, dict) or not raw_fans:
@@ -270,7 +263,6 @@ def parse_config(data: Any) -> Config:
                 hysteresis_c=hyst,
             )
 
-    # failsafe
     fs_raw = data.get("failsafe", {})
     failsafe = FailsafeSpec()
     if not isinstance(fs_raw, dict):
@@ -297,7 +289,6 @@ def parse_config(data: Any) -> Config:
         if interval is not None and 0 < failsafe.frozen_after_s < 3 * interval:
             errs.append("failsafe.frozen_after_s: must be 0 (off) or at least three intervals")
 
-    # web
     web_raw = data.get("web", {})
     web = WebSpec()
     if not isinstance(web_raw, dict):
