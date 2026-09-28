@@ -1,0 +1,8 @@
+#!/bin/sh
+# Rejects commit messages that break the convention in CONTRIBUTING.md.
+# Enable once per clone: git config core.hooksPath .githooks
+if ! command -v node >/dev/null 2>&1; then
+  echo "commit-msg: node is required to check the message (see CONTRIBUTING.md)" >&2
+  exit 1
+fi
+exec node "$(git rev-parse --show-toplevel)/scripts/commitlint.mjs" --file "$1"
