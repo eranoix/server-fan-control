@@ -79,7 +79,6 @@ def test_put_curve_applies_and_persists(served, sysfs):
     assert code == 200 and res["fan"]["curve"] == curve
     assert load_config(path).fans["cpu_fan"].min_pwm == 35
     assert app.controller.config.fans["cpu_fan"].curve[0] == (30, 40)
-    # applied immediately: 40 C on the new curve is 50 percent
     assert app.controller.fans["cpu_fan"].target_pct == 50
 
 
@@ -134,8 +133,8 @@ def test_token_is_required_when_configured(served):
     ok = {"Authorization": "Bearer s3cret-token-for-tests"}
     assert call(base + "/api/status", headers=ok)[0] == 200
     assert call(base + "/api/fans/cpu_fan", "PUT", {"min_pwm": 40})[0] == 401
-    assert call(base + "/healthz")[0] == 200  # liveness stays open
-    with urllib.request.urlopen(base + "/") as r:  # the page itself is static
+    assert call(base + "/healthz")[0] == 200
+    with urllib.request.urlopen(base + "/") as r:
         assert r.status == 200
 
 

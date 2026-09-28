@@ -49,7 +49,7 @@ def test_bad_reading_is_bridged_then_goes_full(make_controller, sysfs, clock, br
     assert before < FULL
 
     break_it(sysfs)
-    run(ctl, clock, 5)  # stale_after_s is 5: still bridging
+    run(ctl, clock, 5)
     assert ctl.sensors["cpu"].status == "holding"
     assert ctl.fans["cpu_fan"].mode == "curve"
     assert sysfs.pwm(1) == before
@@ -57,7 +57,7 @@ def test_bad_reading_is_bridged_then_goes_full(make_controller, sysfs, clock, br
     run(ctl, clock, 1)
     assert ctl.fans["cpu_fan"].mode == "failsafe"
     assert sysfs.pwm(1) == FULL
-    assert ctl.overall_state() == "degraded"  # the other fan is still fine
+    assert ctl.overall_state() == "degraded"
 
 
 def test_a_bad_sensor_only_affects_the_fans_it_drives(make_controller, sysfs, clock):
@@ -104,7 +104,7 @@ def test_frozen_sensor_is_caught_when_enabled(make_controller, sysfs, clock):
     run(ctl, clock, 2)
     assert ctl.sensors["cpu"].status == "frozen"
     assert sysfs.pwm(1) == FULL
-    sysfs.set_temp("cpu", 55.5)  # it moves again
+    sysfs.set_temp("cpu", 55.5)
     run(ctl, clock, 1)
     assert ctl.fans["cpu_fan"].mode == "curve"
 
@@ -129,10 +129,10 @@ def test_exception_in_a_tick_drives_every_fan_to_full(make_controller, sysfs):
     ctl.tick()
     assert sysfs.pwm(1) < FULL and sysfs.pwm(2) < FULL
     ctl.crash_next_tick = "boom"
-    ctl.tick()  # must not raise
+    ctl.tick()
     assert sysfs.pwm(1) == FULL and sysfs.pwm(2) == FULL
     assert ctl.errors == 1 and "boom" in ctl.last_error
-    ctl.tick()  # next tick is healthy again
+    ctl.tick()
     assert sysfs.pwm(1) < FULL
     assert ctl.errors == 0
 
@@ -176,11 +176,11 @@ def test_watchdog_forces_full_when_the_loop_stalls(make_controller, sysfs, clock
     clock.advance(3)
     assert ctl.watchdog_check() is False
     assert sysfs.pwm(1) < FULL
-    clock.advance(2)  # watchdog_s is 4
+    clock.advance(2)
     assert ctl.watchdog_check() is True
     assert sysfs.pwm(1) == FULL and sysfs.pwm(2) == FULL
     assert ctl.overall_state() == "failsafe"
-    ctl.tick()  # the loop comes back
+    ctl.tick()
     assert not ctl.watchdog_tripped
 
 
@@ -195,7 +195,7 @@ def test_watchdog_does_not_need_the_loop_lock(make_controller, sysfs, clock):
     ctl.tick()
     done = threading.Event()
 
-    def hang():  # a tick that hangs while holding the lock
+    def hang():
         with ctl.lock:
             done.wait(5)
 
@@ -216,7 +216,7 @@ def test_chip_missing_waits_then_takes_control(make_controller, sysfs, clock, tm
     ctl.tick()
     assert ctl.overall_state() == "waiting"
     assert not ctl.taken
-    hidden.rename(sysfs.nct)  # driver loads late
+    hidden.rename(sysfs.nct)
     clock.advance(1)
     ctl.tick()
     assert ctl.taken and sysfs.mode(1) == 1
@@ -231,8 +231,8 @@ def test_release_restores_the_original_modes(make_controller, sysfs, raw_config)
     assert ctl.fans["cpu_fan"].mode == "released"
     assert ctl.overall_state() == "released"
     assert not os.path.exists(raw_config["state_file"])
-    ctl.release()  # idempotent
-    ctl.tick()  # and a late tick does not take the chip back
+    ctl.release()
+    ctl.tick()
     assert sysfs.mode(1) == 5
 
 
@@ -264,22 +264,21 @@ def test_if_restore_fails_the_channel_is_left_at_full_not_at_our_last_duty(
 def test_chip_left_in_manual_by_a_crash_is_restored_to_auto_mode(make_controller, sysfs):
     for ch in (1, 2):
         sysfs.write(sysfs.nct / f"pwm{ch}_enable", 1)
-    ctl = make_controller()  # no state file: the true original is unknown
+    ctl = make_controller()
     ctl.tick()
-    assert ctl.original_modes == {1: 5, 2: 5}  # configured auto_mode
+    assert ctl.original_modes == {1: 5, 2: 5}
 
 
 def test_state_file_survives_a_kill_and_restore_uses_it(make_controller, sysfs, raw_config):
     sysfs.write(sysfs.nct / "pwm1_enable", 3)
     first = make_controller()
-    first.tick()  # ...and then the process is killed: no release()
+    first.tick()
     assert sysfs.mode(1) == 1
 
-    second = make_controller()  # the service restarts
+    second = make_controller()
     second.tick()
-    assert second.original_modes[1] == 3  # from the state file, not the current manual 1
+    assert second.original_modes[1] == 3
 
-    # or, instead of a restart, ExecStopPost runs `fancurve restore`
     lines = restore_from_state(second.config, Hwmon(sysfs.root))
     assert sysfs.mode(1) == 3 and sysfs.mode(2) == 5
     assert "pwm1 -> mode 3" in lines

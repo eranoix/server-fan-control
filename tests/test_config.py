@@ -158,7 +158,7 @@ def test_update_fan_validates_and_leaves_original_untouched():
         update_fan(cfg, "cpu_fan", {"curve": [[30, 30], [80, 90]]})
     assert "full speed" in exc.value.errors[0]
     with pytest.raises(ConfigError):
-        update_fan(cfg, "cpu_fan", {"channel": 2})  # not editable from the API
+        update_fan(cfg, "cpu_fan", {"channel": 2})
     with pytest.raises(ConfigError):
         update_fan(cfg, "nope", {"min_pwm": 30})
     with pytest.raises(ConfigError):
@@ -171,7 +171,7 @@ def test_save_and_load_round_trip(tmp_path):
     save_config(cfg, path)
     assert load_config(path) == cfg
     assert json.loads(path.read_text())["fans"]["cpu_fan"]["curve"][0] == [40, 20]
-    assert [p.name for p in path.parent.iterdir()] == ["config.json"]  # no temp files left
+    assert [p.name for p in path.parent.iterdir()] == ["config.json"]
 
 
 def test_failed_save_keeps_the_old_file(tmp_path, monkeypatch):
@@ -193,8 +193,6 @@ def test_failed_save_keeps_the_old_file(tmp_path, monkeypatch):
 
 def test_load_reports_json_errors_with_line(tmp_path):
     p = tmp_path / "c.json"
-    # A missing comma, not a trailing one: Python 3.13 reports a trailing comma
-    # on the line of the comma, older versions on the line after it.
     p.write_text('{\n "chip": "x"\n "fans": {}\n}')
     with pytest.raises(ConfigError) as exc:
         load_config(p)

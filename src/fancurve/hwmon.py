@@ -30,7 +30,7 @@ class Reading:
     """One temperature read, with the reason when it is not usable."""
 
     value: float | None
-    status: str  # ok | missing | garbage | out_of_range | io_error
+    status: str
     detail: str = ""
 
     @property
@@ -119,8 +119,6 @@ class Hwmon:
             raise HwmonError(f"chip {chip!r} not found")
         path = d / attr
         if not path.exists():
-            # sysfs never creates attributes on write; refusing here keeps a
-            # typo in the config from silently creating files in a fake tree.
             raise HwmonError(f"{chip}/{attr} does not exist")
         try:
             with open(path, "w") as fh:

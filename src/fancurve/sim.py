@@ -33,12 +33,10 @@ from pathlib import Path
 AMBIENT_C = 24.0
 
 WORKLOADS: dict[str, dict[str, float]] = {
-    # watts per heat source
     "idle": {"cpu": 14.0, "gpu": 4.0, "nvme": 1.6},
     "build": {"cpu": 72.0, "gpu": 6.0, "nvme": 6.5},
     "stress": {"cpu": 98.0, "gpu": 32.0, "nvme": 3.0},
 }
-# The default workload cycles, so a demo left open keeps changing.
 CYCLE: tuple[tuple[str, float], ...] = (("idle", 45), ("build", 70), ("stress", 55), ("idle", 40))
 
 FAULTS = ("missing", "garbage", "frozen", "disconnected")
@@ -48,10 +46,10 @@ FAULTS = ("missing", "garbage", "frozen", "disconnected")
 class SimSensor:
     chip: str
     attr: str
-    node: str  # which thermal node it reads
+    node: str
     offset: float = 0.0
-    tau: float = 3.0  # sensor lag, seconds
-    step: float = 0.5  # reported resolution, C
+    tau: float = 3.0
+    step: float = 0.5
     reading: float = AMBIENT_C
 
 
@@ -59,12 +57,11 @@ class SimSensor:
 class SimFan:
     channel: int
     max_rpm: float
-    stall_pct: float  # below this duty the rotor stops
+    stall_pct: float
     tau: float = 1.6
     rpm: float = 0.0
 
 
-# Sensor ids used by the example configs and the demo buttons.
 SENSORS: dict[str, SimSensor] = {
     "cpu": SimSensor("nct6798", "temp13_input", "cpu", tau=1.5, step=0.125),
     "system": SimSensor("nct6798", "temp1_input", "case", offset=2.0, tau=6.0, step=0.5),
@@ -72,14 +69,12 @@ SENSORS: dict[str, SimSensor] = {
     "gpu": SimSensor("amdgpu", "temp1_input", "gpu", tau=2.0, step=1.0),
 }
 FANS: dict[int, SimFan] = {
-    1: SimFan(1, max_rpm=1850, stall_pct=18),  # CPU cooler
-    2: SimFan(2, max_rpm=1400, stall_pct=22),  # front intake
-    3: SimFan(3, max_rpm=1500, stall_pct=20),  # rear exhaust
+    1: SimFan(1, max_rpm=1850, stall_pct=18),
+    2: SimFan(2, max_rpm=1400, stall_pct=22),
+    3: SimFan(3, max_rpm=1500, stall_pct=20),
 }
 CHIPS = {"hwmon0": "nct6798", "hwmon1": "nvme", "hwmon2": "amdgpu"}
 
-# What the simulated firmware does in automatic mode: a blunt stepped curve,
-# the kind that sits at 60 percent at idle and jumps to 100 at the first peak.
 FIRMWARE_STEPS = ((0, 60), (50, 75), (60, 100))
 
 
@@ -143,14 +138,13 @@ class Simulator:
             _atomic_write(p / "name", name)
         nct = self.chip_dir("nct6798")
         for ch, fan in self.fans.items():
-            _atomic_write(nct / f"pwm{ch}_enable", "5")  # firmware in charge
+            _atomic_write(nct / f"pwm{ch}_enable", "5")
             _atomic_write(nct / f"pwm{ch}", "153")
             _atomic_write(nct / f"fan{ch}_input", "0")
             fan.rpm = 0.6 * fan.max_rpm
         for sid, s in self.sensors.items():
             s.reading = getattr(self.state, s.node) + s.offset
             self._write_sensor(sid)
-        # A couple of sensors nobody uses, as on the real chip.
         _atomic_write(nct / "temp2_input", "31000")
         _atomic_write(nct / "in0_input", "1016")
         return self.root
@@ -218,8 +212,6 @@ class Simulator:
             raw = _read_int(nct / f"pwm{ch}", self._pwm_seen.get(ch, 153))
             self._pwm_seen[ch] = raw
             return max(0.0, min(255.0, raw)) * 100 / 255
-        # Automatic: the firmware picks, from the CPU for the CPU fan and
-        # from the board sensor for the case fans, and reports it in pwmN.
         src = self.sensors["cpu"].reading if ch == 1 else self.sensors["system"].reading
         duty = firmware_duty(src)
         self._put(nct / f"pwm{ch}", str(round(duty * 255 / 100)))
@@ -236,7 +228,7 @@ class Simulator:
         wobble = 1 + 0.06 * math.sin(self.sim_time / 7.0) + self.rng.uniform(-0.04, 0.04)
         p = {k: v * wobble for k, v in base.items()}
         s = self.state
-        if s.cpu > 96:  # the CPU protects itself, as real silicon does
+        if s.cpu > 96:
             p["cpu"] *= 0.55
         self.power = {k: round(v, 1) for k, v in p.items()}
 
@@ -253,7 +245,7 @@ class Simulator:
         g_gpu = 0.45 + 1.3 * case_flow
         g_nvme = 0.12 + 0.55 * frac[2]
         g_case = 2.0 + 14.0 * case_flow
-        into_case = p["cpu"] + p["gpu"] + p["nvme"] + 18.0  # board, PSU, disks
+        into_case = p["cpu"] + p["gpu"] + p["nvme"] + 18.0
         s.cpu += dt * (p["cpu"] - g_cpu * (s.cpu - s.case)) / 55.0
         s.gpu += dt * (p["gpu"] - g_gpu * (s.gpu - s.case)) / 40.0
         s.nvme += dt * (p["nvme"] - g_nvme * (s.nvme - s.case)) / 14.0
@@ -273,8 +265,6 @@ class Simulator:
         sensor = self.sensors[sid]
         path = self.chip_dir(sensor.chip) / sensor.attr
         fault = self.faults.get(sid)
-        # Measurement noise on top of the lagged value, sized to the sensor's
-        # resolution, so the reported number moves the way real ones do.
         noisy = sensor.reading + self.rng.gauss(0, 0.6 * sensor.step)
         q = round(noisy / sensor.step) * sensor.step
         value = str(round(q * 1000))
@@ -286,7 +276,6 @@ class Simulator:
         if fault == "garbage":
             self._put(path, "N/A")
         elif fault == "disconnected":
-            # What an open thermistor input typically reads: far below zero.
             self._put(path, "-55000")
         elif fault == "frozen":
             self._put(path, self._frozen_values.setdefault(sid, value))
@@ -321,8 +310,6 @@ class Simulator:
 
 
 def _atomic_write(path: Path, text: str) -> None:
-    # Readers must never see a half-written value, or the controller would
-    # (correctly) report garbage that the real kernel never produces.
     tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     tmp.write_text(text + "\n")
     os.replace(tmp, path)

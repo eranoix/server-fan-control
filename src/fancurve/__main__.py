@@ -50,7 +50,6 @@ def serve(
     ctl = Controller(cfg)
     atexit.register(ctl.release)
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
-        # Only possible from the main thread; tests run serve() elsewhere.
         with contextlib.suppress(ValueError):
             signal.signal(sig, lambda *_: stop.set())
 

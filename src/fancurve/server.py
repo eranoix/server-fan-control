@@ -77,7 +77,6 @@ class App:
                 save_config(new, self.config_path)
             self.controller.set_config(new)
             self.controller.event("info", f"fan {fan_id}: updated {', '.join(sorted(changes))}")
-        # Apply right away instead of waiting for the next tick.
         self.controller.tick()
         return config_to_dict(new)["fans"][fan_id]
 

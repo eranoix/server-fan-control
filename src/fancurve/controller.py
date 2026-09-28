@@ -38,13 +38,13 @@ log = logging.getLogger("fancurve")
 
 FULL_SPEED_RAW = 255
 MANUAL_MODE = 1
-HISTORY_S = 15 * 60  # what the dashboard charts
+HISTORY_S = 15 * 60
 
 
 @dataclass
 class SensorTrack:
-    value: float | None = None  # value the controller is using right now
-    status: str = "unknown"  # ok | holding | missing | garbage | out_of_range | io_error | frozen
+    value: float | None = None
+    status: str = "unknown"
     detail: str = ""
     last_good: float | None = None
     last_good_at: float | None = None
@@ -96,7 +96,7 @@ def assess(
 class FanTrack:
     hysteresis: Hysteresis
     source: str
-    mode: str = "starting"  # curve | failsafe | released | starting
+    mode: str = "starting"
     reason: str = ""
     temp: float | None = None
     effective: float | None = None
@@ -133,7 +133,6 @@ class Controller:
         self.watchdog_tripped = False
         self.history: deque[dict[str, Any]] = deque(maxlen=int(HISTORY_S / config.interval_s) + 5)
         self.events: deque[dict[str, Any]] = deque(maxlen=100)
-        # Test and demo hook: raise inside the next tick, as a bug would.
         self.crash_next_tick: str | None = None
 
     @property
@@ -175,8 +174,6 @@ class Controller:
             if mode is None:
                 mode = self.hwmon.read_int_or_none(cfg.chip, f.enable_attr)
             if mode is None or mode == MANUAL_MODE:
-                # Manual already means a previous run died without restoring;
-                # the chip's real automatic mode is unknown, use the configured one.
                 mode = cfg.auto_mode
             self.original_modes[f.channel] = mode
         self._write_state_file()
@@ -202,8 +199,6 @@ class Controller:
                     self.hwmon.write_int(cfg.chip, f.enable_attr, mode)
                     restored.append(f"pwm{f.channel}={mode}")
                 except HwmonError as exc:
-                    # Could not restore automatic mode: the best remaining
-                    # state is manual at full speed, never whatever we left.
                     self.event("error", f"restore of pwm{f.channel} failed ({exc}); forcing full")
                     self._write_full(f)
                 self.fans[f.id].mode = "released"
@@ -293,9 +288,6 @@ class Controller:
     def _apply(self, f: FanSpec, track: FanTrack, pct: float) -> None:
         raw = FULL_SPEED_RAW if pct >= 100 else pct_to_raw(pct)
         cfg = self._cfg
-        # Re-assert manual mode every tick: firmware, a suspend/resume cycle
-        # or another tool can flip it back, and a pwm write in automatic mode
-        # is silently ignored by the driver.
         if self.hwmon.read_int_or_none(cfg.chip, f.enable_attr) != MANUAL_MODE:
             self.hwmon.write_int(cfg.chip, f.enable_attr, MANUAL_MODE)
         self.hwmon.write_int(cfg.chip, f.pwm_attr, raw)
@@ -328,9 +320,6 @@ class Controller:
         last = self.last_tick_at if self.last_tick_at is not None else self.started_at
         if self.clock() - last <= limit or self.released:
             return False
-        # Deliberately not taking self.lock: a loop that hangs while holding
-        # it is exactly the case this exists for. Two writers of 255 cannot
-        # disagree, so the race is harmless.
         if not self.watchdog_tripped:
             self.watchdog_tripped = True
             self.event("error", f"control loop silent for over {limit:g}s; watchdog forcing full")

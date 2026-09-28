@@ -14,7 +14,6 @@ def test_chips_are_found_by_name_not_by_number(sysfs):
 def test_cache_is_revalidated_after_renumbering(sysfs):
     hw = Hwmon(sysfs.root)
     assert hw.find("nct6798") == sysfs.nct
-    # driver reload: the chip comes back under another number
     moved = sysfs.nct.rename(sysfs.base / "hwmon7")
     assert hw.find("nct6798") == moved
 
@@ -55,7 +54,7 @@ def test_read_temp_out_of_range(sysfs, milli):
 def test_read_temp_io_error(sysfs):
     p = sysfs.temp_path("cpu")
     p.unlink()
-    p.mkdir()  # reading a directory raises an OSError that is not ENOENT
+    p.mkdir()
     r = Hwmon(sysfs.root).read_temp("nct6798", "temp13_input")
     assert r.status == "io_error"
 

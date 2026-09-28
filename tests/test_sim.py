@@ -37,7 +37,7 @@ def test_stalled_fans_under_stress_overheat(sim):
     sim.set_workload("stress")
     for _ in range(600):
         sim.step(0.5)
-    assert hw.read_int("nct6798", "fan1_input") == 0  # below stall duty: rotor stops
+    assert hw.read_int("nct6798", "fan1_input") == 0
     assert sim.state.cpu > 90
 
 
@@ -47,7 +47,7 @@ def test_controller_keeps_the_simulated_machine_cool(sim):
     ctl = Controller(cfg, clock=lambda: t[0])
     sim.set_workload("stress")
     peak = 0.0
-    for _ in range(600):  # 10 simulated minutes
+    for _ in range(600):
         sim.step(1.0)
         t[0] += 1.0
         ctl.tick()

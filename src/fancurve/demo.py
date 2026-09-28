@@ -59,8 +59,6 @@ DEMO_CONFIG = {
             "hysteresis_c": 1.5,
         },
     },
-    # The simulator adds sensor noise, so a value that stops moving for 30 s
-    # is a dead sensor there. On real hardware this check is opt-in.
     "failsafe": {
         "stale_after_s": 5,
         "frozen_after_s": 30,

@@ -11,8 +11,6 @@ from collections.abc import Sequence
 
 Point = tuple[float, float]
 
-# Shipped presets. Every one of them ends at 100 percent, because config
-# validation refuses a curve that never reaches full speed.
 PRESETS: dict[str, tuple[Point, ...]] = {
     "quiet": ((30, 30), (55, 35), (70, 55), (82, 100)),
     "balanced": ((30, 35), (50, 45), (65, 70), (78, 100)),
@@ -41,7 +39,6 @@ def interpolate(points: Sequence[Sequence[float]], temp: float) -> float:
     for (t0, p0), (t1, p1) in zip(points, points[1:], strict=False):
         if t0 <= temp <= t1:
             return p0 + (p1 - p0) * (temp - t0) / (t1 - t0)
-    # Unreachable for a sorted curve; fall back to the safe end.
     return float(last_p)
 
 

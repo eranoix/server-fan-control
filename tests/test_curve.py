@@ -9,14 +9,14 @@ CURVE = [(40, 20), (60, 40), (70, 70), (80, 100)]
 @pytest.mark.parametrize(
     ("temp", "expected"),
     [
-        (0, 20),  # below the first point: flat
-        (40, 20),  # exactly on a point
-        (50, 30),  # halfway along the first segment
-        (60, 40),  # segment boundary
+        (0, 20),
+        (40, 20),
+        (50, 30),
+        (60, 40),
         (65, 55),
         (75, 85),
         (80, 100),
-        (120, 100),  # above the last point: flat
+        (120, 100),
     ],
 )
 def test_interpolate(temp, expected):
@@ -67,9 +67,8 @@ class TestHysteresis:
     def test_drop_beyond_width_follows_with_offset(self):
         h = Hysteresis(3)
         h.update(60)
-        assert h.update(56) == 59  # 56 + 3
+        assert h.update(56) == 59
         assert h.update(55) == 58
-        # and a small rise after that is still absorbed by the band
         assert h.update(57) == 58
 
     def test_wobbling_sensor_does_not_move_the_output(self):

@@ -1,7 +1,4 @@
 'use strict';
-// fancurve dashboard. No framework, no build step: the server ships this
-// file as is. It polls /api/status every second, appends /api/history, and
-// renders SVG by hand.
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const SENSOR_COLORS = { cpu: '--s-cpu', system: '--s-system', nvme: '--s-nvme', gpu: '--s-gpu' };
@@ -249,7 +246,7 @@ function syncEditor(id) {
 function renderPoints(id) {
   const d = draftFor(id);
   const box = document.getElementById('ep-' + id);
-  if (box.contains(document.activeElement)) return; // do not steal focus mid-typing
+  if (box.contains(document.activeElement)) return;
   const lastK = d.curve.length - 1;
   box.style.setProperty('--n', d.curve.length);
   const temps = d.curve.map((p, k) => h('input', {
@@ -265,8 +262,6 @@ function renderPoints(id) {
   box.replaceChildren(h('span', { text: '°C' }), ...temps, h('span', { text: 'duty' }), ...duties);
 }
 
-// Keeps the draft inside what the server accepts: temperatures strictly
-// increasing, duty never decreasing, the last point pinned at 100 percent.
 function setPoint(id, k, t, p) {
   const c = draftFor(id).curve;
   const lastK = c.length - 1;
@@ -300,7 +295,6 @@ function drawEditor(id) {
     kids.push(h('svg:line', { class: 'gridline', x1: EX(t), x2: EX(t), y1: ED.T, y2: ED.H - ED.B }));
     kids.push(h('svg:text', { x: EX(t), y: ED.H - 7, 'text-anchor': 'middle', text: t + '°' }));
   }
-  // floor band: whatever the curve says, the fan never goes below this
   kids.push(h('svg:rect', { class: 'floor', fill: `url(#hatch-${id})`, x: ED.L, y: EY(d.min_pwm), width: ED.W - ED.L - ED.R, height: EY(0) - EY(d.min_pwm) }));
   kids.push(h('svg:line', { class: 'floor-line', x1: ED.L, x2: ED.W - ED.R, y1: EY(d.min_pwm), y2: EY(d.min_pwm) }));
   kids.push(h('svg:text', { x: ED.W - ED.R - 4, y: EY(d.min_pwm) - 5, 'text-anchor': 'end', text: 'floor ' + d.min_pwm + '%' }));
@@ -311,7 +305,6 @@ function drawEditor(id) {
   kids.push(h('svg:path', { class: 'area', d: path + `L${EX(T_MAX)} ${EY(0)}L${EX(T_MIN)} ${EY(0)}Z`, fill: `url(#grad-${id})` }));
   kids.push(h('svg:path', { class: 'curve', d: path, stroke: col }));
 
-  // live marker: dashed at the sensor reading, dot at what the fan is doing
   const st = state.status && state.status.fans[id];
   if (st && st.temp != null && d.source === st.source) {
     const x = EX(clamp(st.temp, T_MIN, T_MAX));
