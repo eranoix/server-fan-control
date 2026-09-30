@@ -18,6 +18,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # A squash merge adds " (#N)" to a title that may already be 72
+      # characters. If the checker counts it again, main goes red after a
+      # green pull request, so this step fails first.
+      - name: Checker allows the squash suffix
+        run: |
+          s="fix: $(printf 'a%.0s' $(seq 67))"
+          node scripts/commitlint.mjs --text "$s (#1)"
+          if node scripts/commitlint.mjs --text "${s}a" 2>/dev/null; then
+            echo "a 73-character subject passed"; exit 1
+          fi
       - name: Pull request title
         if: github.event_name == 'pull_request'
         env:
