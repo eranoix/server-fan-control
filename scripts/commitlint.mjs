@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const TYPES = ["feat", "fix", "perf", "refactor", "style", "docs", "test", "build", "ci", "chore", "revert"];
+const SQUASH_SUFFIX = / \(#\d+\)$/;
 const MAX_SUBJECT = 72;
 const MAX_BODY_LINE = 72;
 const SUBJECT = new RegExp(`^(${TYPES.join("|")})(?:\\(([^)]*)\\))?: (.+?)(?: \\(([A-Z][A-Z0-9]*-\\d+)\\))?$`);
@@ -57,7 +58,9 @@ export function lint(raw, scopes = loadScopes()) {
   const errors = [];
   const lines = clean(raw);
   if (!lines.length) return ["empty message"];
-  const subject = lines[0];
+  // A squash merge on GitHub appends " (#N)" to the PR title. The title was
+  // already checked on the pull request, so the suffix does not count here.
+  const subject = lines[0].replace(SQUASH_SUFFIX, "");
 
   if (subject.length > MAX_SUBJECT) errors.push(`subject is ${subject.length} chars, max ${MAX_SUBJECT}`);
   if (/[^\x20-\x7e]/.test(subject)) errors.push("subject must be plain ASCII (no accents, no dashes like —)");
